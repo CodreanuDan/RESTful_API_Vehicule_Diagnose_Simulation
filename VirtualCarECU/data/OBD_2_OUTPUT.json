@@ -1,0 +1,35 @@
+[
+    {
+        "ign_stat": "0_OFF",
+        "power_supply": 11.92,
+        "engine_info": {
+            "rpm": 0,
+            "speed": 0,
+            "gear": "N",
+            "power": 0,
+            "torque": 0,
+            "fuel_consumtion": 0.0,
+            "coolant_temp": 91,
+            "coolant_level": 80,
+            "oil_level": 80,
+            "pedal_lvl": 0
+        },
+        "error_log": {},
+        "error_input": [],
+        "error_memory": {},
+        "can_handle_error_manager": false,
+        "clear_error_memory": false,
+        "clear_error_log": false,
+        "security_access": {
+            "auth_response": [
+                1,
+                "Security_Access_UNLOCKED"
+            ],
+            "auth_request": true,
+            "seed": 8978202516707451185773163863519212768,
+            "key": 0
+        },
+        "time_stamp": "2025-03-26 18:45:00",
+        "REAL_RPM": 802
+    }
+]

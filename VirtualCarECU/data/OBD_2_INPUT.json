@@ -1,0 +1,17 @@
+{
+    "error_injection": [],
+    "clear_error_memory": false,
+    "clear_error_log": false,
+    "parameter_to_delete": "",
+    "can_handle_error_manager": false,
+    "ign_stat": 0,
+    "pedal_lvl": 0,
+    "gear": "N",
+    "manipulate_oil_levels": 0,
+    "manipulate_coolant_levels": 0,
+    "manipulate_voltage": 0,
+    "security_access": {
+        "auth_request": true,
+        "key": 0
+    }
+}
