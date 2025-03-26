@@ -31,7 +31,7 @@ class VirtualECU:
         # self.DEBUG = self.OFF
         # _____CAR_DATA__________________________________________________________
         # ***********************************************************************
-        self.ECU_ID = 897820251670 # Generic ID
+        self.ECU_ID = 8978 # Generic ID 4digits
         # ***********************************************************************
         self.gear_ratio = \
             {
@@ -199,11 +199,11 @@ class VirtualECU:
         """ 
             :Function name: SecAcc_genSeed
             - Descr: Generate seed for security access unlock:
-                     ECU_ID(12 digits) + 25 random number seed 
+                     ECU_ID(4 digits) + 15 random number seed 
             :return: seed:int
         """
         self.__seed = str(self.ECU_ID) + \
-            ''.join(str(random.randint(1, 9)) for _ in range(25))
+            ''.join(str(random.randint(1, 9)) for _ in range(15))
         return int(self.__seed)
     # -----------------------------------------------------------------------
     def SecAcc_checkKey(self, seed: int, key: int) -> bool:
@@ -211,13 +211,13 @@ class VirtualECU:
             :Function name: SecAcc_checkKey
             - Descr: Verifies if the provided key is valid by checking if the sum of each pair of corresponding digits 
                     from the seed (excluding ECU_ID part) and the key is 10.
-            :param seed: ECU_ID (12 digits) + 25 random digits
+            :param seed: ECU_ID (4 digits) + 15 random digits
             :param key: Key to be verified
             :return: True if the key is valid, False otherwise
         """
-        seed_digits = str(seed)[-25:]
-        key_digits = str(key)[-25:]
-        if len(key_digits) != 25:
+        seed_digits = str(seed)[-15:]
+        key_digits = str(key)[-15:]
+        if len(key_digits) != 15:
             return False
         for s, k in zip(seed_digits, key_digits):
             if int(s) + int(k) != 10:

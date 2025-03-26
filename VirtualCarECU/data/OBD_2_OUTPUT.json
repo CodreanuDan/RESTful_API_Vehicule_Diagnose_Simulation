@@ -1,18 +1,18 @@
 [
     {
-        "ign_stat": "0_OFF",
-        "power_supply": 11.92,
+        "ign_stat": "401",
+        "power_supply": 401,
         "engine_info": {
-            "rpm": 0,
-            "speed": 0,
-            "gear": "N",
-            "power": 0,
-            "torque": 0,
-            "fuel_consumtion": 0.0,
-            "coolant_temp": 91,
-            "coolant_level": 80,
-            "oil_level": 80,
-            "pedal_lvl": 0
+            "rpm": 401,
+            "speed": 401,
+            "gear": "401",
+            "power": 401,
+            "torque": 401,
+            "fuel_consumtion": 401,
+            "coolant_temp": 401,
+            "coolant_level": 401,
+            "oil_level": 401,
+            "pedal_lvl": 401
         },
         "error_log": {},
         "error_input": [],
@@ -22,14 +22,14 @@
         "clear_error_log": false,
         "security_access": {
             "auth_response": [
-                1,
-                "Security_Access_UNLOCKED"
+                2,
+                "Security_Access_DENIED"
             ],
             "auth_request": true,
-            "seed": 8978202516707451185773163863519212768,
-            "key": 0
+            "seed": 8978564744122929451,
+            "key": 8978233185346231193
         },
-        "time_stamp": "2025-03-26 18:45:00",
-        "REAL_RPM": 802
+        "time_stamp": "2025-03-27 00:45:31",
+        "REAL_RPM": 401
     }
 ]

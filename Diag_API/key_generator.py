@@ -20,12 +20,12 @@ class Key_Generator:
             :Function name: SecAcc_genKey
             - Descr: Generate key to complete the seed such that the sum of each pair of corresponding digits from the seed 
                     (excluding ECU_ID part) and the key is 10.
-            :param seed: ECU_ID (12 digits) + 25 random digits
+            :param seed: ECU_ID (4 digits) + 15 random digits
             :return: key: int
         """
         seed_str = str(seed)
-        ecu_id = seed_str[:12]
-        random_digits = seed_str[12:]
+        ecu_id = seed_str[:4]
+        random_digits = seed_str[4:]
         key_str = ''.join(str(10 - int(digit)) for digit in random_digits)
         final_key = ecu_id + key_str  
         return int(final_key)  
@@ -35,21 +35,21 @@ class Key_Generator:
             :Function name: SecAcc_checkKey
             - Descr: Verifies if the provided key is valid by checking if the sum of each pair of corresponding digits 
                     from the seed (excluding ECU_ID part) and the key is 10.
-            :param seed: ECU_ID (12 digits) + 25 random digits
+            :param seed: ECU_ID (4 digits) + 15 random digits
             :param key: Key to be verified
             :return: True if the key is valid, False otherwise
         """
         seed_str, key_str = str(seed), str(key)
-        if len(seed_str) != 37 or len(key_str) != 37:
+        if len(seed_str) != 19 or len(key_str) != 19:
             return False
-        for s, k in zip(seed_str[-25:], key_str[-25:]):
+        for s, k in zip(seed_str[-15:], key_str[-15:]):
             if int(s) + int(k) != 10:
                 return False
         return True
 
 
 if __name__ == "__main__":
-    seed = 8978202516705689437561947923596528873 
+    seed = 1234567890123456789
     key_gen = Key_Generator()
     key = key_gen.KeyGen_genKey(seed=seed)
     print(f"*KEY:  {key}")
