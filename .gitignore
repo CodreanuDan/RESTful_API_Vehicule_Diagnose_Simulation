@@ -1,4 +1,4 @@
 myenv
-RESTful_API\Diag_API\api\env_data.env
-RESTful_API\VirtualCarECU\data\OBD_2_INPUT.json
-RESTful_API\VirtualCarECU\data\OBD_2_OUTPUT.json
+Diag_API\api\env_data.env
+VirtualCarECU\data\OBD_2_INPUT.json
+VirtualCarECU\data\OBD_2_OUTPUT.json
