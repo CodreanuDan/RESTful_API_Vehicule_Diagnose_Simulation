@@ -5,26 +5,8 @@
 #
 # Created by: Codreanu Dan
 # Descr:
-#           CAR SIM: --> Engine management: rpm, pwr, torque, gear, speed, liquid levels, ign status
-#                        * Calculates engine params
-#                        * Check that the engine runs in specific params, otherwise raise specific error
-#                    --> Power supply manager: supply voltage
-#                        * Calculates supply params
-#                        * Check that the supply is providing correct voltage, otherwise raise specific error
-#                    --> Communication manager: obd_2_input, obs_2_output
-#                        * Mantains communcation between the ECU and the Diag API
-#                        * Specific errors have no effect
-#                    --> Error manager: add/remove/check errors
-#                        * Mantains error management, handles error_memory and error_log by setting and removing errors
-#                    --> Security manager: seed, key
-#                        * Check that the key is compatible with the seed generated
-#                    --> Main simulation
-#                        * Runs the modules in a loop to perform simulation
-# UPDATES: Added error management for the engine and power supply
-#          Removed engine staus data list and replaced it with individual signals
-#          Added Injector Malfunction  in error management
-#          Resolved error log and error memory issues
-# 
+
+
 #***********************************************************************
 
 #***********************************************************************
@@ -45,14 +27,11 @@ class VirtualECU:
         # ***********************************************************************
         self.ON  = True
         self.OFF = False
-        #---Debug_mode------------------------------------------
         self.DEBUG = self.ON
         # self.DEBUG = self.OFF
-        #-------------------------------------------------------
-        self.SIMULATION_DELAY = 0.5 # seconds
         # _____CAR_DATA__________________________________________________________
         # ***********************************************************************
-        self.ECU_ID = 8978 # Generic ID
+        self.ECU_ID = 8978 # Generic ID 4digits
         # ***********************************************************************
         self.gear_ratio = \
             {
@@ -83,8 +62,6 @@ class VirtualECU:
         # ***********************************************************************
         self.error_dict = \
             {
-                # *Engine errors
-                #-----------------------------------------------------
                 0xE0110:  "EngErr_RpmSensorMalfunction",
                 0xE0111:  "EngErr_FuelConsmUnav",
                 0xE0112:  "EngErr_SpdmtrFault",
@@ -92,22 +69,11 @@ class VirtualECU:
                 0xE0121:  "EngErr_OilLvlLow",
                 0xE0122:  "EngErr_CoolLvlLow",
                 0xE0130:  "EngErr_IgnMalfunction",
-                #----Injector-Faults-
-                0xE0131:  "EngErr_Malfunction_Injector_1",
-                0xE0132:  "EngErr_Malfunction_Injector_2",
-                0xE0133:  "EngErr_Malfunction_Injector_3",
-                0xE0134:  "EngErr_Malfunction_Injector_4",
-                #--------------------
-                # *Communication errors
-                #-----------------------------------------------------
                 0xE0210:  "ComErr_CanErr_LossOfComm",
                 0xE0211:  "ComErr_CanErr_Overvoltage",
                 0xE0212:  "ComErr_CanErr_Undervoltage",
-                # *Electrical errors
-                #-----------------------------------------------------
                 0xE0310:  "ElErr_Overvoltage",
                 0xE0311:  "ElErr_Undervoltage",
-                #-----------------------------------------------------
             }
         # -----Error-Memory
         self.error_input = []       #  in error input if the error is present will set the status to active in err mem and set the error in err log
@@ -207,27 +173,6 @@ class VirtualECU:
         seen = set()
         error_input[:] = [err for err in error_input if not (
             err in seen or seen.add(err))]
-    # -----------------------------------------------------------------------   
-    def ErrMng_errInjInjectorMalfunction(self, error_input: list) -> int:
-        """ """
-        self.KEYWORD = "EngErr_Malfunction_Injector_"
-        self.POWER_LOSS_DUE_TO_INJECTOR_MALFUNCTION = 25
-        self.__power_loss = 0
-        self.__count_errs = 0
-        for error in error_input:
-            if self.KEYWORD in error:
-                # Extract errpr number: 0xE0130 + inj.nr -> EngErr_Malfunction_Injector_ + inj.nr
-                self.__injector_number = int(error.replace(self.KEYWORD, ""))
-                # Get error code
-                self.__error_code = 0xE0130 + self.__injector_number
-                self.__power_loss += self.POWER_LOSS_DUE_TO_INJECTOR_MALFUNCTION
-                self.__count_errs += 1
-                self.ErrMng_addErrorToMemory(error_code=self.error_dict[self.__error_code], error_input=self.error_input)
-        
-        if self.__count_errs >= 2:
-            self.act_ign_stat = 0
-
-        return self.__power_loss
     # _____end_of_ERROR_MNGMT_____________________________________________<<*
     # ***********************************************************************
 
@@ -286,7 +231,7 @@ class VirtualECU:
     # ***********************************************************************
     def EngStat_MainFunction(self, gear: str, pedal_lvl: int, error_input: list, ign_stat: int) -> list:
         """ """
-        # self.engine_status_data = [] # removed to individual signals
+        self.engine_status_data = []
         # ___Check_IGN_STAT___________________________________________________________
         # ****************************************************************************
         self.act_ign_stat = ign_stat
@@ -303,7 +248,7 @@ class VirtualECU:
                 # -------------------------------------------------------------------
         # ___Check_Engine_Status______________________________________________________
         # ****************************************************************************
-        self.real_rpm = self.EngStat_calcRpm(gear=gear, pedal_lvl=pedal_lvl, ign_stat=self.act_ign_stat, error_memory=["EMPTY"])
+        self.real_rpm = self.EngStat_CalcRpm(gear=gear, pedal_lvl=pedal_lvl, ign_stat=self.act_ign_stat, error_memory=["EMPTY"])
          # ****************************************************************************
         # -----Error-Response
         if self.act_ign_stat == 0 or self.act_ign_stat == 3 or self.error_dict[0xE0110] in error_input:
@@ -319,19 +264,19 @@ class VirtualECU:
             self.ErrMng_addErrorToMemory(error_code=self.error_dict[0xE0111], error_input=self.error_input)  # INST_FUEL_CONSM_ERR
             # --------------------------------------------------------------------
             self.rpm = 0
-            # self.engine_status_data.append(self.rpm) # removed to individual signals
+            self.engine_status_data.append(self.rpm)
             self.power = 0
-            # self.engine_status_data.append(self.power) # removed to individual signals
+            self.engine_status_data.append(self.power)
             self.torque = 0
-            # self.engine_status_data.append(self.torque) # removed to individual signals
+            self.engine_status_data.append(self.torque)
         # -----Normal-Case
         else:
-            self.rpm = self.EngStat_calcRpm(gear=gear, pedal_lvl=pedal_lvl, ign_stat=self.act_ign_stat, error_memory=error_input)
-            # self.engine_status_data.append(self.rpm) # removed to individual signals
+            self.rpm = self.EngStat_CalcRpm(gear=gear, pedal_lvl=pedal_lvl, ign_stat=self.act_ign_stat, error_memory=error_input)
+            self.engine_status_data.append(self.rpm)
             self.power = self.EngStat_calcPwr(rpm=self.rpm)
-            # self.engine_status_data.append(self.power) # removed to individual signals
+            self.engine_status_data.append(self.power)
             self.torque = self.EngStat_calcTorque(rpm=self.rpm, power=self.power, pedal_lvl=pedal_lvl)
-            # self.engine_status_data.append(self.torque) # removed to individual signals
+            self.engine_status_data.append(self.torque)
         # ___Check_Engine_Sensors_____________________________________________________
         # ****************************************************************************
         # -----Normal-Case
@@ -343,7 +288,7 @@ class VirtualECU:
         self.oil_level = fluid_level[1] + self.__manipulate_oil_levels
         self.fuel_consumption = self.EngStat_calcFuelCons(rpm=self.rpm)
         self.coolant_temp = self.EngStat_coolTemp(rpm=self.real_rpm)
-        # self.engine_status_data.append(self.coolant_temp) # removed to individual signals
+        self.engine_status_data.append(self.coolant_temp)
         # -----Error-Response
         VALID_SIG = [0, 1, 2]
         RPM_THRESHOLD = 825
@@ -372,9 +317,9 @@ class VirtualECU:
         # ****************************************************************************
         self.speed = self.EngStat_calcSpeed(rpm=self.rpm, gear=self.gear)
         # ****************************************************************************
-        # return self.engine_status_data # removed to individual signals
+        return self.engine_status_data
     # -----------------------------------------------------------------------
-    def EngStat_calcRpm(self, gear: str, pedal_lvl: int, ign_stat: int, error_memory: list) -> int:
+    def EngStat_CalcRpm(self, gear: str, pedal_lvl: int, ign_stat: int, error_memory: list) -> int:
         """ """
         MAX_RPM = 5000
         gear_ratio = self.gear_ratio[gear]
@@ -396,16 +341,11 @@ class VirtualECU:
         rpm_points = [v[0] for v in self.power_curve.values()]
         power_points = [v[1] for v in self.power_curve.values()]
 
-        self.__diminshed_power_due_to_injector_malfunction = 0
-        #-----Manage-Injector-Errs-
-        self.__diminshed_power_due_to_injector_malfunction = self.ErrMng_errInjInjectorMalfunction(error_input=self.error_input)
-        #--------------------------
-
         if rpm <= rpm_points[0]:
-            return power_points[0] - self.__diminshed_power_due_to_injector_malfunction
+            return power_points[0]
         elif rpm >= rpm_points[-1]:
-            return power_points[-1] - self.__diminshed_power_due_to_injector_malfunction
-        
+            return power_points[-1]
+
         for i in range(len(rpm_points) - 1):
             if rpm_points[i] <= rpm < rpm_points[i + 1]:
                 TOLERANCE = 0.02
@@ -413,8 +353,8 @@ class VirtualECU:
                     rpm, rpm_points[i], rpm_points[i + 1], power_points[i], power_points[i + 1]))
                 power = random.randint(
                     int(power - (power * TOLERANCE)), int(power + (power * TOLERANCE)))
-                return power - self.__diminshed_power_due_to_injector_malfunction
-        return power_points[-1] - self.__diminshed_power_due_to_injector_malfunction  # Default fail-safe
+                return power
+        return power_points[-1]  # Default fail-safe
     # -----------------------------------------------------------------------
     def EngStat_getPwrCurve(self, x: int, x1: int, x2: int, y1: int, y2: int) -> float:
         """ """
@@ -734,7 +674,7 @@ class VirtualECU:
             self.ErrMng_clearErrorMemory(clear_flag=self.clear_error_memory)
             self.ErrMng_clearErrorLog(clear_flag=self.clear_error_log)
             self.ErrMng_errInjRemoveDupl(error_input=self.error_input)
-            time.sleep(self.SIMULATION_DELAY)
+            time.sleep(1)
     # _____end_of_SIMULATION______________________________________________<<*
     # ***********************************************************************
 

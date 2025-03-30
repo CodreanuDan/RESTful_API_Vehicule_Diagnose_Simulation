@@ -131,18 +131,21 @@ class Diag_API(Resource, key_gen, ecu_com_mng):
             # Check for sub-params (ex: 'engine_info.rpm')
             param_parts = param.split('.')
 
-            # json data is returned as a list and the info is the first element -> 0   
-            data_to_return = ecu_data[0] 
+            if ecu_data and isinstance(ecu_data, list) and len(ecu_data) > 0:
+                # json data is returned as a list and the info is the first element -> 0   
+                data_to_return = ecu_data[0] 
 
-            # Find the specified param is the JSON -> param.sub-param....
-            try:
-                for part in param_parts:
-                    data_to_return = data_to_return[part]  
-                return {f"{param}": data_to_return}, 200
-            except KeyError:
-                return {"message": f"Param '{param}' not found in output json"}, 400
-            
-        # Return all ecu data if no param requested
+                # Find the specified param is the JSON -> param.sub-param....
+                try:
+                    for part in param_parts:
+                        data_to_return = data_to_return[part]  
+                    return {f"{param}": data_to_return}, 200
+                except KeyError:
+                    return {"message": f"Param '{param}' not found in output json"}, 400
+                
+            # Return all ecu data if no param requested
+            else:
+                return {"message": "ECU data is empty or invalid."}, 400
         return ecu_data, 200
     
     #___PUT_METHOD___________________________________________________________
@@ -153,11 +156,11 @@ class Diag_API(Resource, key_gen, ecu_com_mng):
                      If the parameter is valid, it updates the respective field in the ECU input JSON.
                      Equivalent for PUT method.
                      Example request:PUT http://localhost:5000/ecu 
-                                    {
-                                        "security_access": {
-                                            "auth_request": true,
-                                            "key": 8978202516705421673549163187514582237}
-                                    }
+                                        {
+                                            "security_access": {
+                                                "auth_request": true,
+                                                "key": 8978202516705421673549163187514582237}
+                                        }
                                     -> updates the ECU input data with the provided JSON in the request body.
             :param: JSON body with the updated ECU input data.
             :return: dict, rc.
