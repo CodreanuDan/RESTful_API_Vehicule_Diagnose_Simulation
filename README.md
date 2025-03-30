@@ -6,3 +6,6 @@ Create a client in LabView to test the API functionality.
               - VirtualCarECU: contains the resource for the api to work with
               - main.py: runs the two components on spearate threads
 * TO DO: Add a Labview interface to create a client and test the API.
+![image](https://github.com/user-attachments/assets/0fcdc2a4-6543-47e0-a800-2285d3eaf1bf)
+![image](https://github.com/user-attachments/assets/fbcaee6d-37c6-4fe6-a282-9ded2d86accc)
+
