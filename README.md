@@ -23,7 +23,11 @@ A LabVIEW client interface has been developed for real-time testing and visualiz
 The LabVIEW client provides an interactive front-end for testing the API:
 
 ### Control Panel  
+- **Engine Parameters** – Off.
 ![Control Panel](https://github.com/user-attachments/assets/0fcdc2a4-6543-47e0-a800-2285d3eaf1bf)
+- **Engine Parameters** – and with measurement on.
+![Control Panel Meas](https://github.com/user-attachments/assets/3606b485-6030-4606-a3a6-83956517df26)
+
 
 ### Block Diagram  
 ![Block Diagram](https://github.com/user-attachments/assets/fbcaee6d-37c6-4fe6-a282-9ded2d86accc)
