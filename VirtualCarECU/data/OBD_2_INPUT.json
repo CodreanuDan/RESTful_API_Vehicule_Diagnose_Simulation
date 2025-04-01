@@ -2,7 +2,7 @@
     "error_injection": [],
     "clear_error_memory": false,
     "clear_error_log": false,
-    "parameter_to_delete": "error_memory.EngErr_Malfunction_Injector_2",
+    "parameter_to_delete": " ",
     "can_handle_error_manager": false,
     "ign_stat": 0,
     "pedal_lvl": 0,
