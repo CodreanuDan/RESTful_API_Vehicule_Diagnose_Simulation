@@ -17,7 +17,7 @@ A LabVIEW client interface has been developed for real-time testing and visualiz
 - **Communication** – Simulate vehicle communication protocols.
 - **Security Management** – Implement authentication and access control mechanisms (seed: 4 digits + 15 random digits -> key: 4 digits + 15 random digits sum for each random digit must be 10 between seed and key in order to valide authentification to the ECU).
 - **Power Supply** – Monitor and adjust voltage levels.
-- **Error Injection** – Simulate and test error-handling mechanisms.
+- **Error Injection** – Simulate and test error-handling mechanism, contains an error input mecanism, an error memory wich tells the user if the error is with status active or passive or a counter to keep track of the error occureneces.
 
 ## LabVIEW Client
 The LabVIEW client provides an interactive front-end for testing the API:
