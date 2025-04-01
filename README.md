@@ -21,6 +21,10 @@ The LabVIEW client provides an interactive front-end for testing the API:
 ### Block Diagram  
 ![Block Diagram](https://github.com/user-attachments/assets/fbcaee6d-37c6-4fe6-a282-9ded2d86accc)
 
+### Virtual ECU Design 
+![EcuFlowDiagram](https://github.com/user-attachments/assets/3c1d5ad6-915b-43d7-9383-c3ad2df9f9e7)
+
+
 
 
 
