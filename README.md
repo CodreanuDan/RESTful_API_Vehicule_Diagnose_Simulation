@@ -6,17 +6,28 @@ This project models a vehicle diagnosis API that interacts with a virtual ECU (E
 A LabVIEW client interface has been developed for real-time testing and visualization.
 
 ## API Features
+- **API KEY** - Send it into the request header to enable communication with the API.
+- **GET** - Get info about vehciule state like engine params, supply voltage, security access and error manager.
+- **POST** - Inject error into the system.
+- **PUT** - Modify engine or voltage params, change gear or increase thortle, start/stop the engine
+- **DELETE** - Delete error memory, error input or error logs as a whole or for specific params
+  
+## Virtual ECU Features
 - **Engine Parameters** – Read and modify engine performance metrics.
 - **Communication** – Simulate vehicle communication protocols.
-- **Security Management** – Implement authentication and access control mechanisms.
+- **Security Management** – Implement authentication and access control mechanisms (seed: 4 digits + 15 random digits -> key: 4 digits + 15 random digits sum for each random digit must be 10 between seed and key in order to valide authentification to the ECU).
 - **Power Supply** – Monitor and adjust voltage levels.
-- **Error Injection** – Simulate and test error-handling mechanisms.
+- **Error Injection** – Simulate and test error-handling mechanism, contains an error input mecanism, an error memory wich tells the user if the error is with status active or passive or a counter to keep track of the error occureneces.
 
 ## LabVIEW Client
 The LabVIEW client provides an interactive front-end for testing the API:
 
 ### Control Panel  
+- **Engine Parameters** – Off.
 ![Control Panel](https://github.com/user-attachments/assets/0fcdc2a4-6543-47e0-a800-2285d3eaf1bf)
+- **Engine Parameters** – and with measurement on.
+![Control Panel Meas](https://github.com/user-attachments/assets/3606b485-6030-4606-a3a6-83956517df26)
+
 
 ### Block Diagram  
 ![Block Diagram](https://github.com/user-attachments/assets/fbcaee6d-37c6-4fe6-a282-9ded2d86accc)
