@@ -2,3 +2,6 @@ myenv
 Diag_API\api\env_data.env
 VirtualCarECU\data\OBD_2_INPUT.json
 VirtualCarECU\data\OBD_2_OUTPUT.json
+VirtualCarECU/data/OBD_2_INPUT.json
+VirtualCarECU/data/OBD_2_OUTPUT.json
+VirtualCarECU/__pycache__/car_simulation.cpython-313.pyc

@@ -49,8 +49,8 @@ class VirtualECU:
         self.ON = True
         self.OFF = False
         #------------------------------------------------------
-        # self.DEBUG = self.ON
-        self.DEBUG = self.OFF
+        self.DEBUG = self.ON
+        # self.DEBUG = self.OFF
         #------------------------------------------------------
         # _____CAR_DATA__________________________________________________________
         # ***********************************************************************
@@ -811,7 +811,7 @@ class VirtualECU:
             if len(self.error_input) != 0:  
                 self.ErrMng_errInjRemoveDupl(error_input=self.error_input)
             # ****************************************************************
-            time.sleep(1)
+            time.sleep(0.5)
             # ****************************************************************
 
     # _____end_of_SIMULATION______________________________________________<<*
