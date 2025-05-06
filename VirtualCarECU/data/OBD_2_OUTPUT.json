@@ -1,7 +1,7 @@
 [
     {
         "ign_stat": "0_OFF",
-        "power_supply": 12.08,
+        "power_supply": 11.95,
         "engine_info": {
             "rpm": 0,
             "speed": 0,
@@ -9,24 +9,14 @@
             "power": 0,
             "torque": 0,
             "fuel_consumtion": 0.0,
-            "coolant_temp": 88,
-            "coolant_level": 80,
-            "oil_level": 79,
+            "coolant_temp": 91,
+            "coolant_level": 79,
+            "oil_level": 81,
             "pedal_lvl": 53
         },
-        "error_log": {
-            "EngErr_Malfunction_Injector_2": 1,
-            "EngErr_Malfunction_Injector_1": 1,
-            "EngErr_OilLvlLow": 1,
-            "EngErr_EngCoolOverheat": 1
-        },
+        "error_log": {},
         "error_input": [],
-        "error_memory": {
-            "EngErr_Malfunction_Injector_2": "passive",
-            "EngErr_Malfunction_Injector_1": "passive",
-            "EngErr_OilLvlLow": "passive",
-            "EngErr_EngCoolOverheat": "passive"
-        },
+        "error_memory": {},
         "can_handle_error_manager": false,
         "clear_error_memory": false,
         "clear_error_log": false,
@@ -36,10 +26,10 @@
                 "Security_Access_UNLOCKED"
             ],
             "auth_request": true,
-            "seed": 0,
-            "key": 8978187357966243266
+            "seed": 8978144386937916251,
+            "key": 0
         },
-        "time_stamp": "2025-04-03 16:17:49",
+        "time_stamp": "2025-05-07 00:53:57",
         "REAL_RPM": 0
     }
 ]

@@ -2,22 +2,22 @@
 # MODULE: diag_api
 # SCOPE:  RESTful api made with flask-restful for communication with the virtual ecu trough TX and RX jsons.
 # REV: 1.0
-# REV: 2.0 - 
 #
 # Created by: Codreanu Dan
 # Descr:
+
+
 #***********************************************************************
 
 #***********************************************************************
 # IMPORTS:
 from flask import Flask, request, jsonify
 from flask_restful import Api, Resource
+import os
 
 from Diag_API.key_generator import Key_Generator as key_gen
 from Diag_API.settings_manager import SettingsManager as config
 from Diag_API.ecu_communication_manager import EcuCommunicationManger as ecu_com_mng
-from Diag_API.mongo_db_handler import MongoDBHandler, DATABASE_NAME, COLLECTION_NAME, CONNECTION_STRING
-from Diag_API.diag_utils import Diag_DataBaseCom_Utils as db_con_utils
 
 diag_api_app = Flask(__name__)
 diag_api = Api(diag_api_app)
@@ -89,117 +89,71 @@ class Diag_API(Resource, key_gen, ecu_com_mng):
         except KeyError:
             return {"message": "security_access not found in ECU data"}, 400
     
-  
-    ''' >>> GET    '''#___GET_METHOD___________________________________________________________
+    # *>>_____API_METHODS____________________________________________________
+    # ***********************************************************************
+
+    #___GET_METHOD___________________________________________________________
     def get(self) -> dict:
         """ 
             :Function name: get
             - Descr: Returns JSON data for the ECU with a specific parameter or whole info
-                    if no parameter is specified in the request.
-                    Equivalent for GET method, ~ GET data by <id>; as the id are the params from the json file.
-            - Example request with param: GET: http://localhost:5000/ecu?param=engine_info.rpm -> returns param "rpm" from engine_info sub-category
-            - Example request with no param: GET: http://localhost:5000/ecu -> returns all info from json.
-            - Example request for snapshot: GET: http://localhost:5000/ecu?snapshot_id=20250504_2351 -> returns full diagnostic snapshot
-            - Example request for all snapshots: GET: http://localhost:5000/ecu?get_snapshots=true -> returns all stored snapshots
-            - Example request for snapshot field: GET: http://localhost:5000/ecu?snapshot_id=20250504_2351&snapshot_param=report_id -> returns top-level field
-            - Example request for nested field: GET: http://localhost:5000/ecu?snapshot_id=20250504_2351&snapshot_param=error_memory.power_supply -> nested field access
-
+                     if no parameter is specified in the request.
+                     Equivalent for GET method, ~ GET data by <id>; as the id are the params from the json file.
+            - Example request with param: GET: http://localhost:5000/ecu?param=engine_info.rpm -> returns param "rpm" from
+                               engine info sub-category of output json. 
+            - Example request with param: GET: http://localhost:5000/ecu -> returns all info from json.
             :return: dict, rc
-            :response codes: 200 OK, 400 Bad Request, 401 Unauthorized, 404 Not Found, 500 Server Error
+            :response codes: 200 OK, 400 Bad Request, 401 Unauthorized
         """
-        # Validate API KEY, return 401 if invalid
+        # Validate API KEY return 401 if invalid
         validation_response = self.validate_api_key()
         if validation_response:
             return validation_response
-
-        #*************************************************************************************
-        # Added MongoDB snapshot retrieval functionality
-        # Check if snapshot retrieval is requested
-        snapshot_id = request.args.get('snapshot_id')
-        snapshot_param = request.args.get('snapshot_param')
-        get_snapshots = request.args.get('get_snapshots')
-
-        if snapshot_id or get_snapshots:
-            self.mongo_db_handler = MongoDBHandler(uri=CONNECTION_STRING, db_name=DATABASE_NAME, collection_name=COLLECTION_NAME)
-            
-            if snapshot_id and snapshot_param:
-                # Optional basic validation
-                if not isinstance(snapshot_param, str) or not snapshot_param.strip():
-                    return {"message": "Invalid snapshot_param"}, 400
-
-                # Get a specific field from a snapshot
-                field_val = self.mongo_db_handler.get_field_from_snapshot(snapshot_id, snapshot_param)
-                if field_val is not None:
-                    return {
-                        "message": "Field retrieved successfully",
-                        "snapshot_id": snapshot_id,
-                        "field": snapshot_param,
-                        "value": field_val
-                    }, 200
-                else:
-                    return {
-                        "message": f"Field '{snapshot_param}' not found in snapshot '{snapshot_id}'"
-                    }, 404
-
-            elif snapshot_id:
-                # Get the entire snapshot
-                snapshot = self.mongo_db_handler.get_snapshot_data_from_db(snapshot_id)
-                if snapshot:
-                    if '_id' in snapshot:
-                        snapshot['_id'] = str(snapshot['_id'])
-                    return {"message": "Snapshot retrieved successfully", "data": snapshot}, 200
-                else:
-                    return {"message": f"No snapshot found with ID: {snapshot_id}"}, 404
-
-            else:
-                # Get all snapshots
-                snapshots = self.mongo_db_handler.get_snapshot_data_from_db()
-                if snapshots:
-                    for snapshot in snapshots:
-                        if '_id' in snapshot:
-                            snapshot['_id'] = str(snapshot['_id'])
-                    return {
-                        "message": "Snapshots retrieved successfully",
-                        "count": len(snapshots),
-                        "data": snapshots
-                    }, 200
-                else:
-                    return {"message": "Failed to retrieve snapshots or no snapshots found"}, 500
-        #*************************************************************************************
-
-        # ECU JSON param handling
+        
+        # URL paramter; what do you want to get from the api resource? 
         param = request.args.get('param', None)
+
+        # Get ECU data
         ecu_data = self.read_json(self.OBD_2_Output_Rx)
 
+        # Check for param (json sub fields)
         if param:
+            #--------------------------------------------------------------------------------------------------------------
+            # Added this part for security access --> will return calculated key
             if param == "security_access":
                 return self.get_sec_acc_calc_key(ecu_data=ecu_data)
+            #--------------------------------------------------------------------------------------------------------------
 
-            if param not in self.valid_params and '.' not in param:
-                return {"message": f"Param '{param}' not found in output json"}, 400
-
+            # Check if a param exists in the valid param list or if a sub-param is requested also
+            if param not in self.valid_params and '.' not in param:  
+                    return {"message": f"Param '{param}' not found in output json"}, 400
+            
+            # Check for sub-params (ex: 'engine_info.rpm')
             param_parts = param.split('.')
+
             if ecu_data and isinstance(ecu_data, list) and len(ecu_data) > 0:
-                data_to_return = ecu_data[0]
+                # json data is returned as a list and the info is the first element -> 0   
+                data_to_return = ecu_data[0] 
+
+                # Find the specified param is the JSON -> param.sub-param....
                 try:
                     for part in param_parts:
-                        data_to_return = data_to_return[part]
+                        data_to_return = data_to_return[part]  
                     return {f"{param}": data_to_return}, 200
                 except KeyError:
                     return {"message": f"Param '{param}' not found in output json"}, 400
+                
+            # Return all ecu data if no param requested
             else:
                 return {"message": "ECU data is empty or invalid."}, 400
-
         return ecu_data, 200
-
-    ''' >>> PUT    '''#___PUT_METHOD___________________________________________________________
+    
+    #___PUT_METHOD___________________________________________________________
     def put(self) -> dict:
         """ 
             :Function name: put
             - Descr: Updates the ECU input data based on the provided JSON data in the request.
                      If the parameter is valid, it updates the respective field in the ECU input JSON.
-                     For MongoDB snapshots:
-                     - If snapshot_id and update_data are provided, it will update specific fields in the snapshot
                      Equivalent for PUT method.
                      Example request:PUT http://localhost:5000/ecu 
                                         {
@@ -208,18 +162,9 @@ class Diag_API(Resource, key_gen, ecu_com_mng):
                                                 "key": 8978202516705421673549163187514582237}
                                         }
                                     -> updates the ECU input data with the provided JSON in the request body.
-                     Example request:PUT http://localhost:5000/ecu?snapshot_id=20250504_2351
-                                        {
-                                            "update_data": {
-                                                "coolant_temp": 95,
-                                                "security_access.auth_request": true
-                                            }
-                                        }
-                                    -> updates the specified fields in the MongoDB snapshot.
-            :param: JSON body with the updated ECU input data or snapshot update data.
-                    URL parameter 'snapshot_id' specifying the snapshot to update.
+            :param: JSON body with the updated ECU input data.
             :return: dict, rc.
-            :response codes: 200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 404 Not Found, 406 Not Acceptable
+            :response codes: 201 Created, 406 Not Acceptable, 401 Unauthorized
         """
         # Validate API KEY return 401 if invalid
         validation_response = self.validate_api_key()
@@ -230,27 +175,6 @@ class Diag_API(Resource, key_gen, ecu_com_mng):
         input_data = request.get_json()  
         if not input_data:
             return {"message": "Input data is empty or invalid."}, 406
-        
-        #*************************************************************************************
-        # Handle MongoDB snapshot updates
-        snapshot_id = request.args.get('snapshot_id')
-        
-        if snapshot_id:
-            # Init connection to database
-            self.mongo_db_handler = MongoDBHandler(uri=CONNECTION_STRING, db_name=DATABASE_NAME, collection_name=COLLECTION_NAME)
-            
-            # Get update_data from request
-            update_data = input_data.get('update_data')
-            if not update_data or not isinstance(update_data, dict):
-                return {"message": "update_data is required and must be a dictionary."}, 400
-            
-            # Update snapshot in MongoDB
-            success = self.mongo_db_handler.put_snapshot_in_db(snapshot_id, update_data)
-            if success:
-                return {"message": f"Snapshot '{snapshot_id}' updated successfully"}, 200
-            else:
-                return {"message": f"Failed to update snapshot '{snapshot_id}'"}, 404
-        #*************************************************************************************
         
         # Read the current ECU input data from file
         ecu_input_data = self.read_json(self.OBD_2_Input_Tx)
@@ -281,14 +205,14 @@ class Diag_API(Resource, key_gen, ecu_com_mng):
         self.write_json(self.OBD_2_Input_Tx, ecu_input_data)
         return {"message": "ECU input data updated successfully."}, 201
     
-    ''' >>> POST   '''#___POST_METHOD__________________________________________________________
+    #___POST_METHOD__________________________________________________________
     def post(self) -> dict:
         """ 
             :Function name: post
             - Descr: Updates the ECU input data, specifically handling the 'error_injection' field.
-                    * If 'error_injection' is provided in the request body, it updates the corresponding field in OBD_2_Input_Tx.
-                    * Equivalnet with POST method.
-                    * Test with: POST: "http://localhost:5000/ecu" and {"error_injection": ["EngErr_RpmSensorMalfunction", "EngErr_FuelConsmUnav"]}
+                     If 'error_injection' is provided in the request body, it updates the corresponding field in OBD_2_Input_Tx.
+                     Equivalnet with POST method.
+                     Test with: POST: "http://localhost:5000/ecu" and {"error_injection": ["EngErr_RpmSensorMalfunction", "EngErr_FuelConsmUnav"]}
             :param: JSON body with 'error_injection' field.
             :return: dict, rc.
             :response codes: 201 Created, 406 Not Acceptable, 401 Unauthorized
@@ -311,28 +235,12 @@ class Diag_API(Resource, key_gen, ecu_com_mng):
         # Handle 'error_injection' separately
         if "error_injection" in input_data:
             ecu_input_data["error_injection"] = input_data["error_injection"]
-            
-        #*************************************************************************************
-        # Handle "save_snapshot" --> post data to mongo db
-        if "save_snapshot" in input_data and input_data["save_snapshot"] is True:
-            
-            # Init connection to database
-            self.mongo_db_handler = MongoDBHandler(uri=CONNECTION_STRING, db_name=DATABASE_NAME, collection_name=COLLECTION_NAME)
-            
-            # Get ECU data
-            ecu_data = self.read_json(self.OBD_2_Output_Rx)
-            formatted_ecu_data_snapshot = db_con_utils.format_diag_snapshot(ecu_data)
-            insertion_id = self.mongo_db_handler.post_snapshot_data_to_db(formatted_ecu_data_snapshot)
-            if insertion_id:
-                return {"message": "Snapshot saved to MongoDB.", "snapshot_id": str(insertion_id)}, 201
-            else:
-                return {"message": "Failed to save snapshot to MongoDB."}, 500
-            
+
         # Save the updated data back to the JSON file
         self.write_json(self.OBD_2_Input_Tx, ecu_input_data)
         return {"message": "ECU input data updated successfully."}, 201
         
-    ''' >>> DELETE '''#___DELETE_METHOD________________________________________________________
+    #___DELETE_METHOD________________________________________________________
     def delete(self) -> dict:
         """
             :Function name: delete
@@ -341,45 +249,15 @@ class Diag_API(Resource, key_gen, ecu_com_mng):
                     If the parameter is 'error_injection', it will delete the content of this subfield.
                     If the parameter targets a sub-field (e.g., 'error_log.ComErr_CanErr_Undervoltage'),
                     it will be removed from the ECU output data (`OBD_2_Output_Rx`).
-                    For MongoDB snapshots:
-                    - If snapshot_id is provided, it will delete the entire snapshot
-                    - If snapshot_id and field_path are provided, it will delete a specific field from the snapshot
                     Equivalent to DELETE method
             :param: URL parameter 'param' specifying the field or sub-field to delete/set to False.
-                    URL parameter 'snapshot_id' specifying the snapshot to delete or modify.
-                    URL parameter 'field_path' specifying the field to delete from a snapshot.
             :return: dict, rc.
-            :response codes: 200 OK, 400 Bad Request, 401 Unauthorized, 404 Not Found, 406 Not Acceptable, 500 Server Error
+            :response codes: 200 OK, 400 Bad Request, 401 Unauthorized, 406 Not Acceptable
         """
         # Validate API KEY return 401 if invalid
         validation_response = self.validate_api_key()
         if validation_response:
             return validation_response
-
-        #*************************************************************************************
-        # Handle MongoDB snapshot deletions
-        snapshot_id = request.args.get('snapshot_id')
-        field_path = request.args.get('field_path')
-        
-        if snapshot_id:
-            # Init connection to database
-            self.mongo_db_handler = MongoDBHandler(uri=CONNECTION_STRING, db_name=DATABASE_NAME, collection_name=COLLECTION_NAME)
-            
-            if field_path:
-                # Delete specific field from snapshot
-                success = self.mongo_db_handler.delete_field_from_snapshot(snapshot_id, field_path)
-                if success:
-                    return {"message": f"Field '{field_path}' deleted from snapshot '{snapshot_id}' successfully"}, 200
-                else:
-                    return {"message": f"Failed to delete field '{field_path}' from snapshot '{snapshot_id}'"}, 404
-            else:
-                # Delete entire snapshot
-                success = self.mongo_db_handler.delete_snapshot_from_db(snapshot_id)
-                if success:
-                    return {"message": f"Snapshot '{snapshot_id}' deleted successfully"}, 200
-                else:
-                    return {"message": f"Failed to delete snapshot '{snapshot_id}'"}, 404
-        #*************************************************************************************
 
         # URL parameter; what do you want to delete from the ECU resource? 
         param = request.args.get('param', None)
@@ -473,9 +351,7 @@ diag_api.add_resource(Diag_API, "/ecu")
 
 
 def start_api():
-    """ To run the API in the main file"""
-    mongo_db_handler = MongoDBHandler(uri=CONNECTION_STRING, db_name=DATABASE_NAME, collection_name=COLLECTION_NAME)
-    mongo_db_handler.init_mongo_connection(uri= CONNECTION_STRING)
+    """ To run the API in the main file  """
     diag_api_app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
 
 if __name__ == "__main__":

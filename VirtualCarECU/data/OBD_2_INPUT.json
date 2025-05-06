@@ -2,7 +2,7 @@
     "error_injection": [],
     "clear_error_memory": false,
     "clear_error_log": false,
-    "parameter_to_delete": " ",
+    "parameter_to_delete": "",
     "can_handle_error_manager": false,
     "ign_stat": 0,
     "pedal_lvl": 53,
@@ -12,6 +12,6 @@
     "manipulate_voltage": 0,
     "security_access": {
         "auth_request": true,
-        "key": 8978187357966243266
+        "key": 0
     }
 }

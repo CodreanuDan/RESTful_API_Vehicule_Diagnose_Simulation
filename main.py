@@ -17,6 +17,7 @@ from Diag_API.diag_api import Diag_API, start_api
 from Diag_API.key_generator import Key_Generator
 from Diag_API.ecu_communication_manager import EcuCommunicationManger
 from Diag_API.settings_manager import SettingsManager
+from Diag_API.mongo_db_handler import MongoDBHandler
 
 class Simulation(VirtualECU, Diag_API):
     """ """

@@ -90,108 +90,100 @@ class Diag_API(Resource, key_gen, ecu_com_mng):
             return {"message": "security_access not found in ECU data"}, 400
     
   
-    ''' >>> GET    '''#___GET_METHOD___________________________________________________________
+    # *>>_____API_METHODS____________________________________________________
+    # ***********************************************************************
+
+    ''' >>> GET  '''#___GET_METHOD___________________________________________________________
     def get(self) -> dict:
         """ 
             :Function name: get
             - Descr: Returns JSON data for the ECU with a specific parameter or whole info
                     if no parameter is specified in the request.
                     Equivalent for GET method, ~ GET data by <id>; as the id are the params from the json file.
-            - Example request with param: GET: http://localhost:5000/ecu?param=engine_info.rpm -> returns param "rpm" from engine_info sub-category
-            - Example request with no param: GET: http://localhost:5000/ecu -> returns all info from json.
-            - Example request for snapshot: GET: http://localhost:5000/ecu?snapshot_id=20250504_2351 -> returns full diagnostic snapshot
+            - Example request with param: GET: http://localhost:5000/ecu?param=engine_info.rpm -> returns param "rpm" from
+                            engine info sub-category of output json. 
+            - Example request with param: GET: http://localhost:5000/ecu -> returns all info from json.
+            - Example request for snapshot: GET: http://localhost:5000/ecu?snapshot_id=20250504_2351 -> returns specific diagnostic snapshot
             - Example request for all snapshots: GET: http://localhost:5000/ecu?get_snapshots=true -> returns all stored snapshots
-            - Example request for snapshot field: GET: http://localhost:5000/ecu?snapshot_id=20250504_2351&snapshot_param=report_id -> returns top-level field
-            - Example request for nested field: GET: http://localhost:5000/ecu?snapshot_id=20250504_2351&snapshot_param=error_memory.power_supply -> nested field access
-
             :return: dict, rc
             :response codes: 200 OK, 400 Bad Request, 401 Unauthorized, 404 Not Found, 500 Server Error
         """
-        # Validate API KEY, return 401 if invalid
+        # Validate API KEY return 401 if invalid
         validation_response = self.validate_api_key()
         if validation_response:
             return validation_response
-
+        
         #*************************************************************************************
         # Added MongoDB snapshot retrieval functionality
         # Check if snapshot retrieval is requested
         snapshot_id = request.args.get('snapshot_id')
-        snapshot_param = request.args.get('snapshot_param')
         get_snapshots = request.args.get('get_snapshots')
-
+        
         if snapshot_id or get_snapshots:
+            # Init connection to database
             self.mongo_db_handler = MongoDBHandler(uri=CONNECTION_STRING, db_name=DATABASE_NAME, collection_name=COLLECTION_NAME)
             
-            if snapshot_id and snapshot_param:
-                # Optional basic validation
-                if not isinstance(snapshot_param, str) or not snapshot_param.strip():
-                    return {"message": "Invalid snapshot_param"}, 400
-
-                # Get a specific field from a snapshot
-                field_val = self.mongo_db_handler.get_field_from_snapshot(snapshot_id, snapshot_param)
-                if field_val is not None:
-                    return {
-                        "message": "Field retrieved successfully",
-                        "snapshot_id": snapshot_id,
-                        "field": snapshot_param,
-                        "value": field_val
-                    }, 200
-                else:
-                    return {
-                        "message": f"Field '{snapshot_param}' not found in snapshot '{snapshot_id}'"
-                    }, 404
-
-            elif snapshot_id:
-                # Get the entire snapshot
+            if snapshot_id:
+                # Get specific snapshot
                 snapshot = self.mongo_db_handler.get_snapshot_data_from_db(snapshot_id)
                 if snapshot:
+                    # Convert MongoDB ObjectId to string for JSON serialization
                     if '_id' in snapshot:
                         snapshot['_id'] = str(snapshot['_id'])
                     return {"message": "Snapshot retrieved successfully", "data": snapshot}, 200
                 else:
                     return {"message": f"No snapshot found with ID: {snapshot_id}"}, 404
-
             else:
                 # Get all snapshots
                 snapshots = self.mongo_db_handler.get_snapshot_data_from_db()
                 if snapshots:
+                    # Convert MongoDB ObjectIds to strings for JSON serialization
                     for snapshot in snapshots:
                         if '_id' in snapshot:
                             snapshot['_id'] = str(snapshot['_id'])
-                    return {
-                        "message": "Snapshots retrieved successfully",
-                        "count": len(snapshots),
-                        "data": snapshots
-                    }, 200
+                    return {"message": "Snapshots retrieved successfully", "count": len(snapshots), "data": snapshots}, 200
                 else:
                     return {"message": "Failed to retrieve snapshots or no snapshots found"}, 500
         #*************************************************************************************
-
-        # ECU JSON param handling
+        
+        # URL paramter; what do you want to get from the api resource? 
         param = request.args.get('param', None)
+
+        # Get ECU data
         ecu_data = self.read_json(self.OBD_2_Output_Rx)
 
+        # Check for param (json sub fields)
         if param:
+            #--------------------------------------------------------------------------------------------------------------
+            # Added this part for security access --> will return calculated key
             if param == "security_access":
                 return self.get_sec_acc_calc_key(ecu_data=ecu_data)
+            #--------------------------------------------------------------------------------------------------------------
 
-            if param not in self.valid_params and '.' not in param:
-                return {"message": f"Param '{param}' not found in output json"}, 400
-
+            # Check if a param exists in the valid param list or if a sub-param is requested also
+            if param not in self.valid_params and '.' not in param:  
+                    return {"message": f"Param '{param}' not found in output json"}, 400
+            
+            # Check for sub-params (ex: 'engine_info.rpm')
             param_parts = param.split('.')
+
             if ecu_data and isinstance(ecu_data, list) and len(ecu_data) > 0:
-                data_to_return = ecu_data[0]
+                # json data is returned as a list and the info is the first element -> 0   
+                data_to_return = ecu_data[0] 
+
+                # Find the specified param is the JSON -> param.sub-param....
                 try:
                     for part in param_parts:
-                        data_to_return = data_to_return[part]
+                        data_to_return = data_to_return[part]  
                     return {f"{param}": data_to_return}, 200
                 except KeyError:
                     return {"message": f"Param '{param}' not found in output json"}, 400
+                
+            # Return all ecu data if no param requested
             else:
                 return {"message": "ECU data is empty or invalid."}, 400
-
         return ecu_data, 200
-
+    
     ''' >>> PUT    '''#___PUT_METHOD___________________________________________________________
     def put(self) -> dict:
         """ 
