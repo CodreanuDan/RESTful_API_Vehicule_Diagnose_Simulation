@@ -1,7 +1,7 @@
 [
     {
         "ign_stat": "0_OFF",
-        "power_supply": 11.95,
+        "power_supply": 12.04,
         "engine_info": {
             "rpm": 0,
             "speed": 0,
@@ -9,8 +9,8 @@
             "power": 0,
             "torque": 0,
             "fuel_consumtion": 0.0,
-            "coolant_temp": 91,
-            "coolant_level": 79,
+            "coolant_temp": 88,
+            "coolant_level": 81,
             "oil_level": 81,
             "pedal_lvl": 53
         },
@@ -26,10 +26,10 @@
                 "Security_Access_UNLOCKED"
             ],
             "auth_request": true,
-            "seed": 8978144386937916251,
+            "seed": 8978835516641813819,
             "key": 0
         },
-        "time_stamp": "2025-05-07 00:53:57",
+        "time_stamp": "2025-05-08 16:50:42",
         "REAL_RPM": 0
     }
 ]

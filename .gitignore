@@ -4292,3 +4292,4 @@ VirtualCarECU/__pycache__/__init__.cpython-311.pyc
 VirtualCarECU/__pycache__/car_simulation.cpython-311.pyc
 Diag_API/__pycache__/diag_api.cpython-313.pyc
 Diag_API/__pycache__/diag_api.cpython-313.pyc
+VirtualCarECU/data/OBD_2_OUTPUT.json
